@@ -8,26 +8,18 @@
 */
 #include <stdio.h>
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+#define TAG   "DELAY"
 
 void app_main(void)
 {
-    printf("Hello world \n!");
-
-    esp_log_level_set("LOG",ESP_LOG_INFO);
-    //Here only we are going to set until the number 3
-    ESP_LOGE("LOG","This is an error");
-    ESP_LOGW("LOG","This is a warning");
-    ESP_LOGI("LOG","This is an info");
-    ESP_LOGD("LOG","This is a Debug");
-    ESP_LOGV("LOG","This is verbose");
-
-    //
-    int number = 0;
-    ESP_LOGE("LOG","This is an error %d",number++ );
-    ESP_LOGW("LOG","This is a warning %d" ,number++);
-    ESP_LOGI("LOG","This is an info %d" ,number++);
-    ESP_LOGD("LOG","This is a Debug %d" ,number++);
-    ESP_LOGV("LOG","This is verbose %d" ,number++);
-
+    int i=0;
+    
+    while(1){
+      vTaskDelay(1000/portTICK_PERIOD_MS);
+      ESP_LOGI(TAG,"\n Counting %d ",i++);
+    }
+ 
 }
