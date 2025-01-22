@@ -1,4 +1,4 @@
-/* Blink Example
+/* Examples for practicing the esp-idf framework
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 
@@ -10,36 +10,40 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+//1. Add the library for the gpios
+#include "driver/gpio.h"
 
-//Add libraries 
-#include "esp_random.h"
-#include "math.h"
-
-#define TAG   "DICE"
-
-//Function to ensure that only we are going to have six faces to random numbers
-int numberDice(){
-    //1.Get the number random
-    int randomNumber = esp_random();
-    //Need to be positive
-    int positiveNumber = abs(randomNumber);
-    //2. Ensure that only its going to be into 6 range
-    int ensureNumber = (positiveNumber % 6) + 1;
-    //3.return the number
-    return ensureNumber;
-}
-
-
+#define TAG   "BLINK"
+// LL define the pin 
+#define PINR  0   // Red
+#define PING  2   // Green
+#define PINB 4  // Blue
 
 void app_main(void)
 {
-  //1.Make a delay
+
+ //Config if the gpio is input or output
+ //gpio_set_direction(GPIO_NUM_0,GPIO_MODE_DEF_OUTPUT); my error
+  gpio_set_direction(PINR,GPIO_MODE_OUTPUT); 
+  gpio_set_direction(PING,GPIO_MODE_OUTPUT);
+  gpio_set_direction(PINB,GPIO_MODE_OUTPUT);
+
+  uint32_t isOn = 0 ;  
+
   while(1){
-     vTaskDelay(1000/portTICK_PERIOD_MS);
-     //2.Ensure that delay be an infinite loop 
-     //3.print into the log the value of the random number beetween 1 - 6
-     int espNumberRandom = numberDice();
-     ESP_LOGI(TAG,"This is the random number : %d",espNumberRandom);
+    //Create variable flag to on and off
+    isOn = !isOn;
+    //uint8_t LedOn=0; my error
+    //2.Set the level of the gpio
+    gpio_set_level(PINR,isOn);
+    //LedOn = !LedOn;my error
+    //3.make a infinite loop to on and off the led every 1 second
+    vTaskDelay(1000/portTICK_PERIOD_MS);
+    gpio_set_level(PING,isOn);
+    vTaskDelay(1000/portTICK_PERIOD_MS);
+    gpio_set_level(PINB,isOn);
+    
   }
- 
+
+  
 }
