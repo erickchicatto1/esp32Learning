@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [ 
+    {
+      "name":"ESP32 OpenOCD",
+      "type":"cppdbg",
+      "request":"launch",
+      "cwd":"C:/Users/robo1/Esp32Course/build",
+      "program":"C:/Users/robo1/Esp32Course/build/Esp32Course.elf",
+      "miDebuggerPath": "C:/Espressif/tools/xtensa-esp-elf-gdb/15.2_20241112/xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb.exe",
+      "setupCommands": [
+        {"text":"target remote 127.0.0.1:3333"},
+        {"text":"set remote hardware-watchpoint-limit 2"},
+        {"text":"monitor reset halt"},
+        {"text":"flushregs"}
+      ]
+    }
+  ]
+}

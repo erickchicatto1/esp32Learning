@@ -1,0 +1,13 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "C:\\Users\\robo1\\esp\\esp-idf",
+    "idf.openOcdConfigs": [
+        "board/esp32-wrover-kit-3.3v.cfg"
+    ],
+    "idf.portWin": "COM17",
+    "idf.toolsPathWin": "C:\\Users\\robo1\\.espressif",
+    "files.associations": {
+        "mqtt_client.h": "c",
+        "esp_wifi.h": "c"
+    }
+}
