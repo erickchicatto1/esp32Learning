@@ -12,6 +12,18 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+//Implement a function to store values in array using pointers
+void SaveIntoArray(char *elementArray){ // To point to the first element in the array
+
+char tempArray[10]={0};
+//1. Make a for to save every element that are passed with the pointer , to the array 
+for(int i = 0 ; i<=10;i++){
+   tempArray[10] = *elementArray;
+}
+//2. 
+
+}
+
 void app_main(void)
 {
     //Define a char
@@ -26,6 +38,9 @@ void app_main(void)
 
        if(c!=0xff){ //check if the char is different to 0xff
         str[strlen(str)] = c; // to avoid the void char
+
+        //Save the char into the array 
+        SaveIntoArray(str);
         printf("%c",c);
        }
       vTaskDelay(100/portTICK_PERIOD_MS);
