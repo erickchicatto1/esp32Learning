@@ -8,42 +8,48 @@
 */
 #include <stdio.h>
 #include <string.h>
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
-//Implement a function to store values in array using pointers
-void SaveIntoArray(char *elementArray){ // To point to the first element in the array
+//1. Define a structure
+typedef struct Person{
+   char FirstName[20];
+   char lastName[20];
+   int age;
+}Person;
 
-char tempArray[10]={0};
-//1. Make a for to save every element that are passed with the pointer , to the array 
-for(int i = 0 ; i<=10;i++){
-   tempArray[10] = *elementArray;
+//4. Make a function to pass the values of the structure
+void PersonValue(Person *person){
+  strcpy(person->FirstName,"Erick");
+  stpcpy(person->lastName,"Lopez");
+  person->age = 32;
+
+   //Print in one line 
+  printf("person : %s %s is %d years old \n",person->FirstName,person->lastName,person->age);
 }
-//2. 
 
+//5. Copy ! into the structure
+void exclamIt(char* phrase){
+   strcat(phrase,"!");
+   printf("Function output %s\n", phrase);
 }
+
 
 void app_main(void)
 {
-    //Define a char
-    char c = 0 ; // this char is going to be used with the getchar function
-    //Define an array with chars
-    char str[100];
-    //Fill the array with ceros
-    memset(str,0,sizeof(str));
+   //2. Use the structure
+   Person person;
+   char phrase[20]={"Hello"};
 
-    while(c != '\n'){ //This is for check that we don't have line break
-       c = getchar();//get the char
+   exclamIt(phrase);
+   PersonValue(&person);
 
-       if(c!=0xff){ //check if the char is different to 0xff
-        str[strlen(str)] = c; // to avoid the void char
+   //My mistakes , you need a function strcpy
+   //person.age =20;
+   //person.FirstName = "Erick";
+   //person.LastName = "Lopez";
 
-        //Save the char into the array 
-        SaveIntoArray(str);
-        printf("%c",c);
-       }
-      vTaskDelay(100/portTICK_PERIOD_MS);
-    }
-    printf("you typed : %s\n",str);
+   //3. Print the elements of the structure , you can print in one line 
+   //printf("This is the firstname  %s", person.FirstName);
+   //printf("This is the last name  %s", person.LastName);
+   //printf("This is the age  %d", person.age);
+
 }
