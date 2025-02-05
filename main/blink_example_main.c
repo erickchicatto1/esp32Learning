@@ -1,11 +1,24 @@
 #include <stdio.h>
-#include "calc\calc.h"
+#include <stdlib.h>
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-#define TAG "This is an calculator example"
 
-void app_main(void){
-
-    sum(1,1);
-
+//1. Define one task for FreeRtos
+void task1(void *params){
+    while(true){
+        printf("reading temperature from %s\n", (char *) params);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }
 
+
+
+
+
+//2. Define another task for FreeRtos 
+void app_main(void){
+
+    
+}
