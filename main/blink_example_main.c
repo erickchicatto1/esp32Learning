@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "calc.h"
+#include "calc\calc.h"
 
 #define TAG "This is an calculator example"
 
