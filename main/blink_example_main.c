@@ -8,17 +8,24 @@
 //1. Define one task for FreeRtos
 void task1(void *params){
     while(true){
-        printf("reading temperature from %s\n", (char *) params);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+      printf("reading temperature from %s\n", (char *) params);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
 
+void task2(void *params){
+   while(true){
+      printf("reading humidity from %s\n",(char *) params);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+   } 
+
+}
 
 
 
 //2. Define another task for FreeRtos 
 void app_main(void){
-
-    
+   xTaskCreate(&task1, "temperature reading", 2048, "task 1", 2, NULL);
+   xTaskCreate(&task2, "humidity reading", 2048, "task 2", 2, NULL);
 }
