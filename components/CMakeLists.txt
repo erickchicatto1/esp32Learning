@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS 
         "calc/calc.cpp"
+        "calc/plusMinuc.c"
     INCLUDE_DIRS 
         "."
     REQUIRES
