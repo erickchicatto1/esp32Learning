@@ -5,9 +5,15 @@
 #include "freertos/task.h"
 
 static TaskHandle_t receiverHandler = NULL;
+static TaskHandle_t xTaskHandle = NULL;
 
 
 void sender(void *params){
+
+    //Get the priority of this task 
+    UBaseType_t priority = uxTaskPriorityGet(xTaskHandle);
+    printf("My priority is: %d\n", priority);
+
     while(true){
         xTaskNotifyGive(receiverHandler);
         vTaskDelay(5000/portTICK_PERIOD_MS);
@@ -54,4 +60,5 @@ void app_main(void){
     xTaskCreate(&receiver,"sender",2048,NULL,2,&receiverHandler);
     xTaskCreate(&sender, "receiver", 2048, NULL, 2, NULL);
 
+    
 }
