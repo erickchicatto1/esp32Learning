@@ -3,55 +3,70 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
+#include "esp_timer.h"
 
-static TaskHandle_t receiverHandler = NULL;
 
+//1.Ultrasonic sensor
+#define TRIG_GPIO   5
+#define ECHO_GPIO   18
 
-void sender(void *params){
-    while(true){
-        xTaskNotifyGive(receiverHandler);
-        vTaskDelay(5000/portTICK_PERIOD_MS);
+void custom_delay_us(uint32_t us){
+    uint32_t cycles = us *(CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+    volatile uint32_t count = 0 ;
+
+    for(volatile uint32_t i=0;i<cycles;++i){
+        count++;
     }
 }
 
-void receiver(void *params){
-    while(true){
-        ulTaskNotifyTake(pdFALSE,portMAX_DELAY);
-        printf("Receive notification \n");
-    }
-}
-
-
-
+//2.Motors
+//3.Engine to clean
+//4.Algorithm Djistra?
 
 void app_main(void){
-    
-    //Define a char
-    char c = 0;
+  
+ //1.Set the trig as output
+ gpio_config_t io_config;
+ io_config.intr_type = GPIO_INTR_DISABLE;
+ io_config.mode = GPIO_MODE_OUTPUT;
+ io_config.pin_bit_mask = (1ULL << TRIG_GPIO); //0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0010 0000
+ io_config.pull_down_en = 0;
+ io_config.pull_up_en = 0 ;
+ gpio_config(&io_config);
 
-    //Define an array with chars
-    char str[100];
+ //1. Set the pin echo as input
+ io_config.intr_type = GPIO_INTR_POSEDGE;
+ io_config.mode = GPIO_MODE_INPUT;
+ io_config.pin_bit_mask = (1ULL << ECHO_GPIO);
+ io_config.pull_down_en = 0;
+ io_config.pull_up_en = 0 ; 
+ gpio_config(&io_config);
 
-    //Fill the array with zeros
-    memset(str,0,sizeof(str));
+ while(1){
+    //Send the pulse to echo pin
+    gpio_set_level(TRIG_GPIO,0);
+    custom_delay_us(2);
+    gpio_set_level(TRIG_GPIO,1);
+    custom_delay_us(10);
+    gpio_set_level(TRIG_GPIO,0);
 
-    //check that we dont have a line brake
-    while(c != '\n'){
-      
-      c = getchar(); //get the char
+    //Wait until the echo pin is activate
+    while(gpio_get_level(ECHO_GPIO)==0);
 
-        if(c!=0xff){
-            str[strlen(str)] = c; // eg. hola -> str[4]= c -> holac, to add characters
-            printf("%c",c);
-        }
-        vTaskDelay(100/portTICK_PERIOD_MS);
-    }
+    //Measue the time 
+    int64_t start_time = esp_timer_get_time();
+    while(gpio_get_level(ECHO_GPIO)==1);
+    int64_t end_time = esp_timer_get_time();
 
-    printf("you typed : %s \n",str);
+    //Calculate the distance
+    int64_t duration = end_time - start_time;
+    float distance = (duration * 0.0343) / 2;
 
+    printf("Distancia: %.2f cm\n", distance);
 
-    //Create the task.
-    xTaskCreate(&receiver,"sender",2048,NULL,2,&receiverHandler);
-    xTaskCreate(&sender, "receiver", 2048, NULL, 2, NULL);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+ }
+
 
 }
