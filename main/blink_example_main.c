@@ -6,6 +6,8 @@
 #include "driver/gpio.h"
 #include "esp_timer.h"
 
+#include "owmDrivers/owmComponents.h"
+
 
 //1.Ultrasonic sensor
 #define TRIG_GPIO   5
@@ -22,7 +24,7 @@ void custom_delay_us(uint32_t us){
 
 //2.Motors
 //3.Engine to clean
-//4.Algorithm Djistra?
+//4.Algorithm Djistra? or PID?
 
 void app_main(void){
   
@@ -31,16 +33,16 @@ void app_main(void){
  io_config.intr_type = GPIO_INTR_DISABLE;
  io_config.mode = GPIO_MODE_OUTPUT;
  io_config.pin_bit_mask = (1ULL << TRIG_GPIO); //0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0010 0000
- io_config.pull_down_en = 0;
- io_config.pull_up_en = 0 ;
+ io_config.pull_down_en = GPIO_PULLDOWN_DISABLE; // Desactiva pull-down
+ io_config.pull_up_en = GPIO_PULLUP_DISABLE;  
  gpio_config(&io_config);
 
  //1. Set the pin echo as input
  io_config.intr_type = GPIO_INTR_POSEDGE;
  io_config.mode = GPIO_MODE_INPUT;
  io_config.pin_bit_mask = (1ULL << ECHO_GPIO);
- io_config.pull_down_en = 0;
- io_config.pull_up_en = 0 ; 
+ io_config.pull_down_en = GPIO_PULLDOWN_DISABLE; // Desactiva pull-down
+ io_config.pull_up_en = GPIO_PULLUP_DISABLE;  
  gpio_config(&io_config);
 
  while(1){

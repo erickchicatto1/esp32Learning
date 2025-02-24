@@ -1,6 +1,6 @@
 idf_component_register(
     SRCS 
-        "calc/calc.cpp"
+        "owmDrivers/owmComponents.cpp"
     INCLUDE_DIRS 
         "."
     REQUIRES
