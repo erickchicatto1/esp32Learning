@@ -80,7 +80,7 @@ void minMaxSum(int *array, int length) {
 
 char* timeConversion(char* s) {
     char time;
-    //. Define the cases
+    //. Define the cases9
     switch(time){
       case '0':
           s = s + 'AM';
@@ -177,6 +177,158 @@ char* timeConversion(char* s) {
 
 
 ---------------------------------------------------------------------
+my mistakes
+#include <stdio.h>
+
+int* breakingrecords(int scores_count, int* scores, int* result_count){
+  
+  int countMin;
+  int countMax;
+  int records[2];
+  
+  for(int i=0;i<scores_count;i++){
+    //count the index 
+    printf("This is the index : %d",scores[i]);
+    
+    //check for the min
+    if(score[i]<score[i+1]){
+      score[i] = score[i+1];
+      countMin++;
+    }
+    
+    //check for the max 
+    if(score[i]>score[i+1]){
+      score[i] = score[i+1];
+      countMax++;
+    }
+    
+    
+    //assing the records
+    records[0] = countMin;
+    records[1] = countMax;
+    
+  }                                             
+  
+  return records;
+}
+
+
+int main() {
+  
+  //1. Make the test for the logic in the function
+  int scores[4]={12,24,10,24};
+  //3. 
+  int scores_count = 4;
+  int numberforResult=4;
+  int *result_count= &numberforResult;
+  
+  int *functionReturn = breakingrecords;
+  
+  
+  return 0;
+}
+
+-----------------First solution correction---------------------------------------
+#include <stdio.h>
+#include <stdlib.h> // Para usar malloc y free
+
+int* breakingrecords(int scores_count, int* scores, int* result_count) {
+    // Inicializar contadores
+    int countMin = 0;
+    int countMax = 0;
+
+    // Inicializar min y max con el primer valor del arreglo
+    int min = scores[0];
+    int max = scores[0];
+
+    // Recorrer el arreglo de puntajes
+    for (int i = 1; i < scores_count; i++) {
+        // Verificar si se rompe el récord mínimo
+        if (scores[i] < min) {
+            min = scores[i];
+            countMin++;
+        }
+
+        // Verificar si se rompe el récord máximo
+        if (scores[i] > max) {
+            max = scores[i];
+            countMax++;
+        }
+    }
+
+    // Asignar resultados a un arreglo dinámico
+    int* records = (int*)malloc(2 * sizeof(int));
+    records[0] = countMax; // Número de veces que se rompe el récord máximo
+    records[1] = countMin; // Número de veces que se rompe el récord mínimo
+
+    // Asignar el tamaño del resultado
+    *result_count = 2;
+
+    return records;
+}
+
+------------------------------------------------------------------------------------
+int* breakingrecords(int scores_count, int* scores, int* result_count) {
+  int *result = calloc(2, sizeof(result)), min = 100000001, max = -1;
+
+  for (long i = 0; i < scores_count; i++)
+  {
+    if (scores[i] < min)
+    {
+        min = scores[i];
+        result[1]++;
+    }
+    if (scores[i] > max)
+    {
+        max = scores[i];
+        result[0]++;
+    }
+  }
+
+  result[0]--;
+  result[1]--;
+
+  *result_count = 2;
+
+  return result;
+}
+
+
+int main() {
+    // Datos de prueba
+    int scores[] = {12, 24, 10, 24};
+    int scores_count = 4;
+    int result_count;
+
+    // Llamar a la función
+    int* result = breakingrecords(scores_count, scores, &result_count);
+
+    // Imprimir resultados
+    printf("Número de veces que se rompió el récord máximo: %d\n", result[0]);
+    printf("Número de veces que se rompió el récord mínimo: %d\n", result[1]);
+
+    // Liberar memoria dinámica
+    free(result);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 */
@@ -194,6 +346,23 @@ int main() {
   int length = sizeof(array) / sizeof(array[0]);
 
   minMaxSum(array, length);
+
+  //Ex3
+  // Casos de prueba
+  char* test1 = "07:05:45PM";
+  char* test2 = "12:00:00AM";
+  char* test3 = "12:00:00PM";
+  char* test4 = "01:30:15AM";
+  char* test5 = "11:59:59PM";
+
+    // Llamadas a la función y verificación de resultados
+  printf("Entrada: %s -> Salida: %s\n", test1, timeConversion(test1)); // Debe ser "19:05:45"
+  printf("Entrada: %s -> Salida: %s\n", test2, timeConversion(test2)); // Debe ser "00:00:00"
+  printf("Entrada: %s -> Salida: %s\n", test3, timeConversion(test3)); // Debe ser "12:00:00"
+  printf("Entrada: %s -> Salida: %s\n", test4, timeConversion(test4)); // Debe ser "01:30:15"
+  printf("Entrada: %s -> Salida: %s\n", test5, timeConversion(test5)); // Debe ser "23:59:59"
+
+  
 
   return 0;
 }
