@@ -16,7 +16,6 @@ L298N::L298N(gpio_num_t in1, gpio_num_t in2, gpio_num_t in3, gpio_num_t in4,
 
 
 void L298N::setup_pwm(){
-
     ledc_timer_config_t timer_config = {
      .speed_mode = LEDC_LOW_SPEED_MODE,
      .duty_resolution = LEDC_TIMER_13_BIT,
@@ -47,11 +46,84 @@ void L298N::setup_pwm(){
         .hpoint = 0
     };
     ledc_channel_config(&channel_config_b);
+}
 
+void L298N::set_motor_speed(ledc_channel_t channel, uint32_t speed){
+    ledc_set_duty(LEDC_LOW_SPEED_MODE,channel,speed);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, channel);
 }
 
 
+void L298N::motorA_forward(uint32_t speed){
+    gpio_set_level(IN1, 1);
+    gpio_set_level(IN2, 0);
+    set_motor_speed(LEDC_CHANNEL_0, speed);
+}
 
+
+void L298N::motorA_backward(uint32_t speed) {
+    gpio_set_level(IN1, 0);
+    gpio_set_level(IN2, 1);
+    set_motor_speed(LEDC_CHANNEL_0, speed);
+}
+
+void L298N::motorA_stop() {
+    gpio_set_level(IN1, 0);
+    gpio_set_level(IN2, 0);
+    set_motor_speed(LEDC_CHANNEL_0, 0);
+}
+
+void L298N::motorB_forward(uint32_t speed) {
+    gpio_set_level(IN3, 1);
+    gpio_set_level(IN4, 0);
+    set_motor_speed(LEDC_CHANNEL_1, speed);
+}
+
+void L298N::motorB_backward(uint32_t speed) {
+    gpio_set_level(IN3, 0);
+    gpio_set_level(IN4, 1);
+    set_motor_speed(LEDC_CHANNEL_1, speed);
+}
+
+void L298N::motorB_stop() {
+    gpio_set_level(IN3, 0);
+    gpio_set_level(IN4, 0);
+    set_motor_speed(LEDC_CHANNEL_1, 0);
+}
+
+// Implementación de la interfaz en C
+extern "C" {
+  
+  void* l298n_create(gpio_num_t in1, gpio_num_t in2, gpio_num_t in3, gpio_num_t in4, 
+                       gpio_num_t ena, gpio_num_t enb) {
+        return new L298N(in1, in2, in3, in4, ena, enb);
+    }
+
+     void l298n_motorA_forward(void* instance, uint32_t speed) {
+        static_cast<L298N*>(instance)->motorA_forward(speed);
+    }
+
+    void l298n_motorA_backward(void* instance, uint32_t speed) {
+        static_cast<L298N*>(instance)->motorA_backward(speed);
+    }
+
+    void l298n_motorA_stop(void* instance) {
+        static_cast<L298N*>(instance)->motorA_stop();
+    }
+
+    void l298n_motorB_forward(void* instance, uint32_t speed) {
+        static_cast<L298N*>(instance)->motorB_forward(speed);
+    }
+
+    void l298n_motorB_backward(void* instance, uint32_t speed) {
+        static_cast<L298N*>(instance)->motorB_backward(speed);
+    }
+
+    void l298n_motorB_stop(void* instance) {
+        static_cast<L298N*>(instance)->motorB_stop();
+    }
+
+}
 
 
 

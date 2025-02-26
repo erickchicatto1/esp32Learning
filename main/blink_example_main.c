@@ -8,7 +8,6 @@
 
 #include "owmDrivers/owmComponents.h"
 
-
 //1.Ultrasonic sensor
 #define TRIG_GPIO   5
 #define ECHO_GPIO   18
@@ -68,6 +67,12 @@ void app_main(void){
     printf("Distancia: %.2f cm\n", distance);
 
     vTaskDelay(pdMS_TO_TICKS(1000));
+
+    //Use of the L298N
+    
+
+
+
  }
 
 
