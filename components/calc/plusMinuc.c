@@ -1,6 +1,6 @@
 #include<stdio.h>
 
-//Exercise one
+//Exercise one Ex 1
 void plusMinus(int arr_count, int *arr){
   
   int posCount=0;//3.PositiveCounter
@@ -33,7 +33,7 @@ void plusMinus(int arr_count, int *arr){
 }
 
 
-//Exercise two 
+//Exercise two Ex 2 
 // Function to get the min and max sum of 4 elements in an array
 void minMaxSum(int *array, int length) {
     if (length < 2) {
@@ -143,7 +143,7 @@ int main() {
 }
 
 ---------------------------------------------------------------------------
-
+Ex 3
 char* timeConversion(char* s) {
     static char result[9];  
     int hh, mm, ss;
@@ -268,50 +268,72 @@ int* breakingrecords(int scores_count, int* scores, int* result_count) {
 }
 
 ------------------------------------------------------------------------------------
-int* breakingrecords(int scores_count, int* scores, int* result_count) {
-  int *result = calloc(2, sizeof(result)), min = 100000001, max = -1;
+i#include <stdio.h>
+#include <stdlib.h>
 
-  for (long i = 0; i < scores_count; i++)
-  {
-    if (scores[i] < min)
-    {
-        min = scores[i];
-        result[1]++;
+
+int *breaking_records(int scores_count , int *scores, int* result_counts){
+  
+  //1. Verificar que no hay partidos 
+  if(scores_count==0){
+    *result_counts=0;
+    return NULL;
+  }
+  
+  //2. Asignar memoria al resultado
+  int* result = calloc(2,sizeof(int));
+  if(result==NULL){
+    *result_counts=0;
+    return NULL;
+  }
+  
+  //3. Inicializar min , max con la primera puntuacion
+  int min = scores[0] , max = scores[0];
+  
+  //4. Inicializar los contadores
+  result[0] = 0;
+  result[1] = 0;
+  
+  //5. Iterar desde el 2do partido 
+  for(int i=1;i<scores_count;++i){
+    
+    //6. Check the min,max
+    if(scores[i]<min){
+      min = scores[i];
+      result[0]++;
     }
-    if (scores[i] > max)
-    {
-        max = scores[i];
-        result[0]++;
+    
+    if(scores[i]>max){
+      max=scores[i];
+      result[1]++;
     }
   }
-
-  result[0]--;
-  result[1]--;
-
-  *result_count = 2;
-
-  return result;
+   //7. Establecer el tam del resultado
+    *result_counts = 2;
+    return result;
 }
 
-
 int main() {
-    // Datos de prueba
     int scores[] = {12, 24, 10, 24};
     int scores_count = 4;
     int result_count;
-
-    // Llamar a la función
-    int* result = breakingrecords(scores_count, scores, &result_count);
-
-    // Imprimir resultados
-    printf("Número de veces que se rompió el récord máximo: %d\n", result[0]);
-    printf("Número de veces que se rompió el récord mínimo: %d\n", result[1]);
-
-    // Liberar memoria dinámica
-    free(result);
-
+    
+    int* result = breaking_records(scores_count, scores, &result_count);
+    
+    if (result != NULL) {
+        printf("Max records broken: %d\n", result[0]);
+        printf("Min records broken: %d\n", result[1]);
+        
+        // Liberar la memoria asignada
+        free(result);
+    } else {
+        printf("Error: No se pudieron calcular los récords.\n");
+    }
+    
     return 0;
 }
+------------------------------------------------------------------------------------------------------------------------------------
+Ex.5
 
 
 
@@ -324,12 +346,7 @@ int main() {
 
 
 
-
-
-
-
-
-
+---------------------------------------------------------------------------------------------------------------------------------------
 
 */
 
