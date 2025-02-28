@@ -334,19 +334,39 @@ int main() {
 }
 ------------------------------------------------------------------------------------------------------------------------------------
 Ex.5
+int divisibleSumPairs(int n, int k, int* arr) {
+    // Contador para devolver
+    int counter = 0;
 
+    // Iterar sobre el array
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            // Verificar si la suma de arr[i] y arr[j] es divisible por k
+            if ((arr[i] + arr[j]) % k == 0) {
+                counter++;
+            }
+        }
+    }
 
+    return counter;
+}
 
+int main() {
+    // Definir el array y los parámetros
+    int arr[6] = {1, 3, 2, 6, 1, 2};
+    int n = 6;
+    int k = 3;
 
+    // Llamar a la función y obtener el resultado
+    int result = divisibleSumPairs(n, k, arr);
 
+    // Imprimir el resultado
+    printf("Number of divisible sum pairs: %d\n", result);
 
+    return 0;
+}
 
-
-
-
-
-
----------------------------------------------------------------------------------------------------------------------------------------
+/--------------------------------------------------------------------------------------------------------------------------------------
 
 */
 
