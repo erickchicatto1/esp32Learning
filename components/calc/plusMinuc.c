@@ -367,7 +367,106 @@ int main() {
 }
 
 /--------------------------------------------------------------------------------------------------------------------------------------
+Ex 6
 
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+// Declaración de las funciones
+void splitCamelCase(char *s, int isMethod);
+void combineWords(char *s, int isClass, int isMethod);
+
+int main() {
+	// Pruebas para splitCamelCase
+	printf("Pruebas para splitCamelCase:\n");
+	
+	// Caso 1: Cadena en CamelCase sin paréntesis
+	char test1[] = "helloWorld";
+	printf("Entrada: %s\n", test1);
+	printf("Salida esperada: hello world\n");
+	printf("Salida obtenida: ");
+	splitCamelCase(test1, 0);
+	printf("\n");
+	
+	// Caso 2: Cadena en CamelCase con paréntesis (método)
+	char test2[] = "myMethod()";
+	printf("Entrada: %s\n", test2);
+	printf("Salida esperada: my method\n");
+	printf("Salida obtenida: ");
+	splitCamelCase(test2, 1);
+	printf("\n");
+	
+	// Pruebas para combineWords
+	printf("Pruebas para combineWords:\n");
+	
+	// Caso 3: Combinar palabras en formato CamelCase (no clase)
+	char test3[] = "combine words";
+	printf("Entrada: %s\n", test3);
+	printf("Salida esperada: combineWords\n");
+	printf("Salida obtenida: ");
+	combineWords(test3, 0, 0);
+	printf("\n");
+	
+	// Caso 4: Combinar palabras en formato CamelCase y añadir paréntesis (método)
+	char test4[] = "my method";
+	printf("Entrada: %s\n", test4);
+	printf("Salida esperada: myMethod()\n");
+	printf("Salida obtenida: ");
+	combineWords(test4, 0, 1);
+	printf("\n");
+	
+	return 0;
+}
+
+// Implementación de las funciones
+void splitCamelCase(char *s, int isMethod) {
+	char out[1000] = "";
+	int outIndex = 0;
+	
+	for (int i = 0; s[i] != '\0'; ++i) {
+		if (isupper(s[i])) {
+			if (i != 0) {
+				out[outIndex++] = ' ';
+			}
+			out[outIndex++] = tolower(s[i]);
+		} else if (isMethod && (s[i] == '(' || s[i] == ')')) {
+			continue;
+		} else {
+			out[outIndex++] = s[i];
+		}
+	}
+	out[outIndex] = '\0';
+	printf("%s\n", out);
+}
+
+void combineWords(char *s, int isClass, int isMethod) {
+	char out[1000] = "";
+	int outIndex = 0;
+	int capitalizeNext = isClass;
+	
+	for (int i = 0; s[i] != '\0'; ++i) {
+		if (s[i] == ' ') {
+			capitalizeNext = 1;
+		} else {
+			if (capitalizeNext) {
+				out[outIndex++] = toupper(s[i]);
+				capitalizeNext = 0;
+			} else {
+				out[outIndex++] = s[i];
+			}
+		}
+	}
+	
+	if (isMethod) {
+		strcat(out, "()");
+	}
+	printf("%s\n", out);
+}
+
+
+
+/--------------------------------------------------------------------------------------------------------------------------------------
 */
 
 /*
