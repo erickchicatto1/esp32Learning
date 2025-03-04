@@ -23,7 +23,7 @@ void custom_delay_us(uint32_t us){
 
 //2.Motors
 //3.Engine to clean
-//4.Algorithm Djistra? or PID?
+//4.PID?
 
 void app_main(void){
   
@@ -70,9 +70,6 @@ void app_main(void){
 
     //Use of the L298N
     
-
-
-
  }
 
 
