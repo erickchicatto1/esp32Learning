@@ -2,8 +2,10 @@ idf_component_register(
     SRCS 
         "owmDrivers/owmComponents.cpp"
         "owmDrivers/Perceptron.c"
+        "owmDrivers/vl530x.c"
     INCLUDE_DIRS 
         "."
     REQUIRES
         "driver"
+        "esp_timer"
 )
