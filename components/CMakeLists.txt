@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS 
         "owmDrivers/owmComponents.cpp"
+        "owmDrivers/Perceptron.c"
     INCLUDE_DIRS 
         "."
     REQUIRES
