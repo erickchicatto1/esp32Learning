@@ -11,10 +11,26 @@
 #include "owmDrivers/Perceptron.h"
 #include "owmDrivers/owmComponents.h"
 #include "owmDrivers/vl53l0x.h"
-
-#define TRIG_GPIO   5
-#define ECHO_GPIO   18
+//Sensor Ultrasonico
+#define TRIG_GPIO         5
+#define ECHO_GPIO         18
+//Power Train
 #define MAX_TRAINING_DATA 100  // Tamaño máximo del conjunto de entrenamiento
+#define PIN_RED           0
+#define PIN_BLUE          4
+
+//Motor dc sistema de succion
+#define IN1_GPIO GPIO_NUM_1  // Control de dirección
+#define IN2_GPIO GPIO_NUM_2  // Control de dirección
+#define ENA_GPIO GPIO_NUM_3  // Control de velocidad (PWM)
+// Configuración del PWM
+#define LEDC_TIMER LEDC_TIMER_0
+#define LEDC_MODE LEDC_LOW_SPEED_MODE
+#define LEDC_CHANNEL LEDC_CHANNEL_0
+#define LEDC_DUTY_RES LEDC_TIMER_13_BIT  // Resolución de 13 bits (0-8191)
+#define LEDC_FREQUENCY 5000              // Frecuencia de 5 kHz
+
+
 
 volatile int64_t start_time = 0;
 volatile int64_t end_time = 0;
@@ -62,6 +78,37 @@ void TrigEchoSensor(void) {
     gpio_isr_handler_add(ECHO_GPIO, echo_isr_handler, NULL);
 }
 
+
+void SuctionSystem(){
+
+  gpio_reset_pin(IN1_GPIO);
+  gpio_set_direction(IN1_GPIO, GPIO_MODE_OUTPUT);
+  gpio_reset_pin(IN2_GPIO);
+  gpio_set_direction(IN2_GPIO, GPIO_MODE_OUTPUT);
+
+    // Configurar el PWM
+  ledc_timer_config_t timer_config = {
+        .speed_mode = LEDC_MODE,
+        .duty_resolution = LEDC_DUTY_RES,
+        .timer_num = LEDC_TIMER,
+        .freq_hz = LEDC_FREQUENCY,
+        .clk_cfg = LEDC_AUTO_CLK
+    };
+  ledc_timer_config(&timer_config);
+
+  ledc_channel_config_t channel_config = {
+        .gpio_num = ENA_GPIO,
+        .speed_mode = LEDC_MODE,
+        .channel = LEDC_CHANNEL,
+        .timer_sel = LEDC_TIMER,
+        .duty = 0,  // Iniciar con duty cycle 0 (motor apagado)
+        .hpoint = 0
+    };
+  ledc_channel_config(&channel_config);
+
+}
+
+
 float medir_distancia() {
     measurement_done = false;
 
@@ -98,13 +145,26 @@ float medir_distancia() {
 }
 
 void app_main(void) {
+    
     // Inicializar el sensor ultrasónico
+    SuctionSystem();
     TrigEchoSensor();
 
     // Inicializar el perceptrón con 1 entrada (distancia) y una tasa de aprendizaje de 0.1
     Perceptron perceptron;
     perceptron_init(&perceptron, 1, 0.1);
 
+    // // Crear una instancia de L298N
+    void* motorController = l298n_create(GPIO_NUM_12, GPIO_NUM_13, GPIO_NUM_14, GPIO_NUM_15, 
+                                        GPIO_NUM_16, GPIO_NUM_17);
+
+    //Leds
+    gpio_reset_pin(PIN_RED);
+    gpio_set_direction(PIN_RED,GPIO_MODE_OUTPUT);
+    gpio_reset_pin(PIN_BLUE);
+    gpio_set_direction(PIN_BLUE,GPIO_MODE_OUTPUT);
+
+    
     // Bucle principal
     while (1) {
         // Medir la distancia
@@ -142,6 +202,41 @@ void app_main(void) {
             }
 
             perceptron_train(&perceptron, (float **)distances, labels, training_count, 1);
+
+            //Sucction system
+        gpio_set_level(IN1_GPIO, 1);
+        gpio_set_level(IN2_GPIO, 0);
+        printf("Girando en sentido horario \n");
+
+        //Aumentar la velocidad gradualmente 
+        for(int duty=0;duty<8191;duty+=100){
+           ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty);
+           ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+        }
+
+        //Detener el motor 
+        gpio_set_level(IN1_GPIO,0);
+        gpio_set_level(IN2_GPIO,0);
+        printf("Motor detenido \n");
+        vTaskDelay(100/ portTICK_PERIOD_MS);
+
+        gpio_set_level(IN1_GPIO,0);
+        gpio_set_level(IN1_GPIO,1);
+        printf("Sentido anti horario \n");
+
+        for(int duty=8191;duty>0;duty-=100){
+           ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty);
+           ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+           vTaskDelay(10 / portTICK_PERIOD_MS); 
+        }
+
+        // Detener el motor
+        gpio_set_level(IN1_GPIO, 0);
+        gpio_set_level(IN2_GPIO, 0);
+        printf("Motor detenido\n");
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
         }
 
         // Predecir si la distancia es "cerca" o "lejos"
@@ -151,28 +246,42 @@ void app_main(void) {
         ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
         
         //Escribir la logica para que se muevan los motores, agregar lo de opencv
-        if(prediction == "Cerca"){
+        if(prediction == 1){
           //MotorA Turn ON
           //MotorB Turn On
+          gpio_set_level(PIN_RED,1);
+          l298n_motorA_forward(motorController, 4095); // 50% de velocidad
+          l298n_motorB_forward(motorController, 4095);
+          vTaskDelay(pdMS_TO_TICKS(2000)); // Espera 2 segundos
+          
+          l298n_motorA_stop(motorController);
+          l298n_motorB_stop(motorController);
+          gpio_set_level(PIN_RED,0);
+
+          // Mover ambos motores hacia atrás a velocidad máxima
+          l298n_motorA_backward(motorController, 8191); // 100% de velocidad
+          l298n_motorB_backward(motorController, 8191);
+
+          vTaskDelay(pdMS_TO_TICKS(2000)); // Espera 2 segundos
           //Turn led red
         }
 
-        else if(prediction == "Lejos"){
+        else if(prediction == 0){
           //MotorA Turn Off
           //MotorB Turn Off
-          //Turn led blue
+        gpio_set_level(PIN_BLUE,1);
+        l298n_motorA_stop(motorController);
+        l298n_motorB_stop(motorController);
+        gpio_set_level(PIN_BLUE,0 );
+        vTaskDelay(pdMS_TO_TICKS(1000)); // Espera 1 segundo
+        //Turn led blue
         }
-
-
-
-        //Logica para controlar el dc motor , con un pid?
 
 
         //Agregar el modulo de can mcp2515? para hacerle diagnosticos?
 
 
-        
-
+    
         // Esperar 1 segundo antes de la siguiente medición
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
