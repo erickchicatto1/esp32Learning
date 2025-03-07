@@ -7,7 +7,10 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "esp_rom_sys.h"
+
 #include "owmDrivers/Perceptron.h"
+#include "owmDrivers/owmComponents.h"
+#include "owmDrivers/vl53l0x.h"
 
 #define TRIG_GPIO   5
 #define ECHO_GPIO   18
@@ -128,9 +131,11 @@ void app_main(void) {
 
         // Entrenar el perceptrón con los datos guardados
         if (training_count > 0) {
+            //Arrays to store the data
             float distances[training_count][1] __attribute__((aligned(4)));  // Asegurar alineación
             int labels[training_count];
 
+        //Copiar los datos de entrenamiento
             for (int i = 0; i < training_count; i++) {
                 distances[i][0] = training_data[i].distance;
                 labels[i] = training_data[i].label;
@@ -144,6 +149,29 @@ void app_main(void) {
         input[0] = distance;
         int prediction = perceptron_predict(&perceptron, input);
         ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
+        
+        //Escribir la logica para que se muevan los motores, agregar lo de opencv
+        if(prediction == "Cerca"){
+          //MotorA Turn ON
+          //MotorB Turn On
+          //Turn led red
+        }
+
+        else if(prediction == "Lejos"){
+          //MotorA Turn Off
+          //MotorB Turn Off
+          //Turn led blue
+        }
+
+
+
+        //Logica para controlar el dc motor , con un pid?
+
+
+        //Agregar el modulo de can mcp2515? para hacerle diagnosticos?
+
+
+        
 
         // Esperar 1 segundo antes de la siguiente medición
         vTaskDelay(pdMS_TO_TICKS(1000));
