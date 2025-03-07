@@ -12,68 +12,56 @@
 #include "owmDrivers/owmComponents.h"
 #include "owmDrivers/vl53l0x.h"
 
-#define TRIG_GPIO   5
-#define ECHO_GPIO   18
-#define MAX_TRAINING_DATA 100  // Tamaño máximo del conjunto de entrenamiento
+// Definiciones de pines
+#define TRIG_GPIO           5
+#define ECHO_GPIO           18
+#define MOTOR1_IN1_GPIO     GPIO_NUM_12
+#define MOTOR1_IN2_GPIO     GPIO_NUM_13
+#define MOTOR2_IN1_GPIO     GPIO_NUM_14
+#define MOTOR2_IN2_GPIO     GPIO_NUM_15
+#define LED_RED_GPIO        GPIO_NUM_0
+#define LED_BLUE_GPIO       GPIO_NUM_4
 
+#define MAX_TRAINING_DATA   100  // Tamaño máximo del conjunto de entrenamiento
+
+// Variables globales
 volatile int64_t start_time = 0;
 volatile int64_t end_time = 0;
 volatile bool measurement_done = false;
 
-// Estructura para almacenar datos de entrenamiento
-typedef struct {
-    float distance;
-    int label;
-} TrainingData;
+typedef struct{
+  float distance;
+  int label;
+}TrainingData;
 
 TrainingData training_data[MAX_TRAINING_DATA];
 int training_count = 0;  // Contador de datos de entrenamiento
 
+Perceptron perceptron;
+
 // Función de interrupción para el pin ECHO
 static void IRAM_ATTR echo_isr_handler(void *arg) {
     if (gpio_get_level(ECHO_GPIO)) {
-        // Flanco de subida: inicio del pulso
-        start_time = esp_timer_get_time();
+        start_time = esp_timer_get_time();  // Flanco de subida
     } else {
-        // Flanco de bajada: fin del pulso
-        end_time = esp_timer_get_time();
+        end_time = esp_timer_get_time();    // Flanco de bajada
         measurement_done = true;
     }
 }
 
-void TrigEchoSensor(void) {
-    gpio_config_t io_config;
-    io_config.intr_type = GPIO_INTR_DISABLE;
-    io_config.mode = GPIO_MODE_OUTPUT;
-    io_config.pin_bit_mask = (1ULL << TRIG_GPIO);
-    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config(&io_config);
 
-    io_config.intr_type = GPIO_INTR_ANYEDGE;  // Detectar flancos de subida y bajada
-    io_config.mode = GPIO_MODE_INPUT;
-    io_config.pin_bit_mask = (1ULL << ECHO_GPIO);
-    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config(&io_config);
+float medir_distancia(){
 
-    // Configurar la interrupción para el pin ECHO
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add(ECHO_GPIO, echo_isr_handler, NULL);
-}
-
-float medir_distancia() {
     measurement_done = false;
 
-    // Enviar pulso al pin TRIG
-    gpio_set_level(TRIG_GPIO, 0);
+    gpio_set_level(TRIG_GPIO,0);
     esp_rom_delay_us(2);
-    gpio_set_level(TRIG_GPIO, 1);
+    gpio_set_level(TRIG_GPIO,1);
     esp_rom_delay_us(10);
-    gpio_set_level(TRIG_GPIO, 0);
+    gpio_set_level(TRIG_GPIO,0);
 
-    // Esperar a que la medición esté lista
-    int timeout = 0;
+    int timeout =0; 
+
     while (!measurement_done && timeout < 1000) {
         vTaskDelay(pdMS_TO_TICKS(1));  // Esperar 1 ms
         timeout++;
@@ -88,54 +76,59 @@ float medir_distancia() {
     int64_t duration = end_time - start_time;
     float distance = (duration * 0.0343) / 2;  // Distancia en cm
 
-    // Ignorar distancias inválidas o demasiado cortas
+     // Ignorar distancias inválidas o demasiado cortas
     if (distance < 2.0) {
         ESP_LOGE("SENSOR", "Distancia inválida: %.2f cm", distance);
         return -1;  // Devolver un valor inválido
     }
 
     return distance;
+
 }
 
-void app_main(void) {
-    // Inicializar el sensor ultrasónico
-    TrigEchoSensor();
 
-    // Inicializar el perceptrón con 1 entrada (distancia) y una tasa de aprendizaje de 0.1
-    Perceptron perceptron;
-    perceptron_init(&perceptron, 1, 0.1);
 
-    // Bucle principal
+
+// Tarea: Medición de distancia con sensor ultrasónico
+void TrigEchoSensorTask(void *pvParameters) {
+    gpio_config_t io_config;
+    io_config.intr_type = GPIO_INTR_DISABLE;
+    io_config.mode = GPIO_MODE_OUTPUT;
+    io_config.pin_bit_mask = (1ULL << TRIG_GPIO);
+    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_config);
+
+    io_config.intr_type = GPIO_INTR_ANYEDGE;
+    io_config.mode = GPIO_MODE_INPUT;
+    io_config.pin_bit_mask = (1ULL << ECHO_GPIO);
+    gpio_config(&io_config);
+
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(ECHO_GPIO, echo_isr_handler, NULL);
+
     while (1) {
-        // Medir la distancia
         float distance = medir_distancia();
-        ESP_LOGI("SENSOR", "Distancia: %.2f cm", distance);
+        if (distance >= 2.0) {
+            ESP_LOGI("SENSOR", "Distancia: %.2f cm", distance);
 
-        // Guardar la distancia en el conjunto de entrenamiento
-        if (training_count < MAX_TRAINING_DATA) {
-            training_data[training_count].distance = distance;
-
-            // Asignar una etiqueta basada en la distancia (1 = "cerca", 0 = "lejos")
-            if (distance < 50.0) {
-                training_data[training_count].label = 1;  // Cerca
-            } else {
-                training_data[training_count].label = 0;  // Lejos
+            if (training_count < MAX_TRAINING_DATA) {
+                training_data[training_count].distance = distance;
+                training_data[training_count].label = (distance < 50.0) ? 1 : 0;
+                training_count++;
             }
-
-            training_count++;
-            ESP_LOGI("TRAINING", "Dato de entrenamiento guardado: Distancia = %.2f cm, Etiqueta = %d",
-                     training_data[training_count - 1].distance, training_data[training_count - 1].label);
-        } else {
-            ESP_LOGE("TRAINING", "Conjunto de entrenamiento lleno. No se pueden guardar más datos.");
         }
+        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
+    }
+}
 
-        // Entrenar el perceptrón con los datos guardados
+// Tarea: Entrenamiento del perceptrón
+void PerceptronTask(void *pvParameters) {
+    while (1) {
         if (training_count > 0) {
-            //Arrays to store the data
-            float distances[training_count][1] __attribute__((aligned(4)));  // Asegurar alineación
+            float distances[training_count][1];
             int labels[training_count];
 
-        //Copiar los datos de entrenamiento
             for (int i = 0; i < training_count; i++) {
                 distances[i][0] = training_data[i].distance;
                 labels[i] = training_data[i].label;
@@ -143,40 +136,61 @@ void app_main(void) {
 
             perceptron_train(&perceptron, (float **)distances, labels, training_count, 1);
         }
+        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
+    }
+}
 
-        // Predecir si la distancia es "cerca" o "lejos"
-        float input[1] __attribute__((aligned(4)));  // Asegurar alineación
-        input[0] = distance;
-        int prediction = perceptron_predict(&perceptron, input);
-        ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
-        
-        //Escribir la logica para que se muevan los motores, agregar lo de opencv
-        if(prediction == "Cerca"){
-          //MotorA Turn ON
-          //MotorB Turn On
-          //Turn led red
+// Tarea: Control de motores y LEDs
+void MotorControlTask(void *pvParameters) {
+    // Configurar pines de motores y LEDs
+    gpio_reset_pin(MOTOR1_IN1_GPIO);
+    gpio_set_direction(MOTOR1_IN1_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(MOTOR1_IN2_GPIO);
+    gpio_set_direction(MOTOR1_IN2_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(MOTOR2_IN1_GPIO);
+    gpio_set_direction(MOTOR2_IN1_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(MOTOR2_IN2_GPIO);
+    gpio_set_direction(MOTOR2_IN2_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(LED_RED_GPIO);
+    gpio_set_direction(LED_RED_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(LED_BLUE_GPIO);
+    gpio_set_direction(LED_BLUE_GPIO, GPIO_MODE_OUTPUT);
+
+    while (1) {
+        if (training_count > 0) {
+            float input[1] = {training_data[training_count - 1].distance};
+            int prediction = perceptron_predict(&perceptron, input);
+            ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
+
+            if (prediction == 1) {
+                // Encender motor 1 y LED rojo
+                gpio_set_level(MOTOR1_IN1_GPIO, 1);
+                gpio_set_level(MOTOR1_IN2_GPIO, 0);
+                gpio_set_level(LED_RED_GPIO, 1);
+                gpio_set_level(LED_BLUE_GPIO, 0);
+            } else if (prediction == 0) {
+                // Encender motor 2 y LED azul
+                gpio_set_level(MOTOR2_IN1_GPIO, 1);
+                gpio_set_level(MOTOR2_IN2_GPIO, 0);
+                gpio_set_level(LED_RED_GPIO, 0);
+                gpio_set_level(LED_BLUE_GPIO, 1);
+            }
         }
+        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
+    }
+}
 
-        else if(prediction == "Lejos"){
-          //MotorA Turn Off
-          //MotorB Turn Off
-          //Turn led blue
-        }
+void app_main(void) {
+    // Inicializar el perceptrón
+    perceptron_init(&perceptron, 1, 0.1);
 
+    // Crear tareas
+    xTaskCreate(TrigEchoSensorTask, "TrigEchoSensor", 2048, NULL, 1, NULL);
+    xTaskCreate(PerceptronTask, "Perceptron", 2048, NULL, 2, NULL);
+    xTaskCreate(MotorControlTask, "MotorControl", 2048, NULL, 3, NULL);
 
-
-        //Logica para controlar el dc motor , con un pid?
-
-
-        //Agregar el modulo de can mcp2515? para hacerle diagnosticos?
-
-
-        
-
-        // Esperar 1 segundo antes de la siguiente medición
+    // Mantener el programa en ejecución
+    while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
-    // Liberar memoria (opcional, ya que app_main nunca termina)
-    perceptron_free(&perceptron);
 }
