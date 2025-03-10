@@ -22,6 +22,17 @@
 #define LED_RED_GPIO        GPIO_NUM_0
 #define LED_BLUE_GPIO       GPIO_NUM_4
 
+//Motor dc sistema de succion
+#define IN1_GPIO GPIO_NUM_1  // Control de dirección
+#define IN2_GPIO GPIO_NUM_2  // Control de dirección
+#define ENA_GPIO GPIO_NUM_3  // Control de velocidad (PWM)
+// Configuración del PWM
+#define LEDC_TIMER LEDC_TIMER_0
+#define LEDC_MODE LEDC_LOW_SPEED_MODE
+#define LEDC_CHANNEL LEDC_CHANNEL_0
+#define LEDC_DUTY_RES LEDC_TIMER_13_BIT  // Resolución de 13 bits (0-8191)
+#define LEDC_FREQUENCY 5000              // Frecuencia de 5 kHz
+
 #define MAX_TRAINING_DATA   100  // Tamaño máximo del conjunto de entrenamiento
 
 // Variables globales
@@ -158,12 +169,16 @@ void MotorControlTask(void *pvParameters) {
 
     while (1) {
         if (training_count > 0) {
+
+            //Encender el pwm para el motor de dc 
+
             float input[1] = {training_data[training_count - 1].distance};
             int prediction = perceptron_predict(&perceptron, input);
             ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
 
-            if (prediction == 1) {
+            if (prediction == 1 && training_data[training_count].distance <= 10) {
                 // Encender motor 1 y LED rojo
+                printf("Enciende motor");
                 gpio_set_level(MOTOR1_IN1_GPIO, 1);
                 gpio_set_level(MOTOR1_IN2_GPIO, 0);
                 gpio_set_level(LED_RED_GPIO, 1);
@@ -179,6 +194,46 @@ void MotorControlTask(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
     }
 }
+/*
+void SucctionTask(void *pvParameters){
+
+    gpio_set_level(IN1_GPIO,1);
+    gpio_set_level(IN1_GPIO,0);
+    printf("Girando en sentido horario");
+
+    for(int duty=0;duty<8191;++duty){
+        ledc_set_duty(LEDC_MODE,LEDC_CHANNEL,duty);
+        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
+     //Detener el motor 
+    gpio_set_level(IN1_GPIO,0);
+    gpio_set_level(IN2_GPIO,0);
+    printf("Motor detenido \n");
+    vTaskDelay(100/ portTICK_PERIOD_MS);
+
+    gpio_set_level(IN1_GPIO,0);
+    gpio_set_level(IN1_GPIO,1);
+    printf("Sentido anti horario \n");
+
+    for(int duty=8191;duty>0;duty-=100){
+        ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty);
+        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+        vTaskDelay(10 / portTICK_PERIOD_MS); 
+    }
+
+    // Detener el motor
+    gpio_set_level(IN1_GPIO, 0);
+    gpio_set_level(IN2_GPIO, 0);
+    printf("Motor detenido\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+}
+
+*/
+
+
 
 void app_main(void) {
     // Inicializar el perceptrón
@@ -188,6 +243,7 @@ void app_main(void) {
     xTaskCreate(TrigEchoSensorTask, "TrigEchoSensor", 2048, NULL, 1, NULL);
     xTaskCreate(PerceptronTask, "Perceptron", 2048, NULL, 2, NULL);
     xTaskCreate(MotorControlTask, "MotorControl", 2048, NULL, 3, NULL);
+    //xTaskCreate(SucctionTask, "SucctionTask", 2048, NULL, 3, NULL);
 
     // Mantener el programa en ejecución
     while (1) {
