@@ -1,252 +1,107 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-#include "esp_timer.h"
-#include "esp_log.h"
-#include "esp_rom_sys.h"
+#include "esp_attr.h"
 
-#include "owmDrivers/Perceptron.h"
-#include "owmDrivers/owmComponents.h"
-#include "owmDrivers/vl53l0x.h"
+#include "driver/mcpwm.h"
+#include "soc/mcpwm_periph.h"
 
-// Definiciones de pines
-#define TRIG_GPIO           5
-#define ECHO_GPIO           18
-#define MOTOR1_IN1_GPIO     GPIO_NUM_12
-#define MOTOR1_IN2_GPIO     GPIO_NUM_13
-#define MOTOR2_IN1_GPIO     GPIO_NUM_14
-#define MOTOR2_IN2_GPIO     GPIO_NUM_15
-#define LED_RED_GPIO        GPIO_NUM_0
-#define LED_BLUE_GPIO       GPIO_NUM_4
+#define GPIO_PWM0A_OUT        15
+#define GPIO_PWM0B_OUT        16
+#define PUSH_BUTTON_PIN_SPEED 33
 
-//Motor dc sistema de succion
-#define IN1_GPIO GPIO_NUM_1  // Control de dirección
-#define IN2_GPIO GPIO_NUM_2  // Control de dirección
-#define ENA_GPIO GPIO_NUM_3  // Control de velocidad (PWM)
-// Configuración del PWM
-#define LEDC_TIMER LEDC_TIMER_0
-#define LEDC_MODE LEDC_LOW_SPEED_MODE
-#define LEDC_CHANNEL LEDC_CHANNEL_0
-#define LEDC_DUTY_RES LEDC_TIMER_13_BIT  // Resolución de 13 bits (0-8191)
-#define LEDC_FREQUENCY 5000              // Frecuencia de 5 kHz
+int buttonState = 0 ;
+int count_value = 0 ; 
+int prestate = 0;
 
-#define MAX_TRAINING_DATA   100  // Tamaño máximo del conjunto de entrenamiento
 
-// Variables globales
-volatile int64_t start_time = 0;
-volatile int64_t end_time = 0;
-volatile bool measurement_done = false;
-
-typedef struct{
-  float distance;
-  int label;
-}TrainingData;
-
-TrainingData training_data[MAX_TRAINING_DATA];
-int training_count = 0;  // Contador de datos de entrenamiento
-
-Perceptron perceptron;
-
-// Función de interrupción para el pin ECHO
-static void IRAM_ATTR echo_isr_handler(void *arg) {
-    if (gpio_get_level(ECHO_GPIO)) {
-        start_time = esp_timer_get_time();  // Flanco de subida
-    } else {
-        end_time = esp_timer_get_time();    // Flanco de bajada
-        measurement_done = true;
-    }
+static void mcpwm_example_gpio_initialize(void)
+{
+    printf("initializing mcpwm gpio...\n");
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, GPIO_PWM0A_OUT);
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0B, GPIO_PWM0B_OUT);
 }
 
-
-float medir_distancia(){
-
-    measurement_done = false;
-
-    gpio_set_level(TRIG_GPIO,0);
-    esp_rom_delay_us(2);
-    gpio_set_level(TRIG_GPIO,1);
-    esp_rom_delay_us(10);
-    gpio_set_level(TRIG_GPIO,0);
-
-    int timeout =0; 
-
-    while (!measurement_done && timeout < 1000) {
-        vTaskDelay(pdMS_TO_TICKS(1));  // Esperar 1 ms
-        timeout++;
-    }
-
-    if (!measurement_done) {
-        ESP_LOGE("SENSOR", "Error: Timeout en la medición de distancia");
-        return -1;  // Devolver un valor inválido
-    }
-
-    // Calcular la distancia
-    int64_t duration = end_time - start_time;
-    float distance = (duration * 0.0343) / 2;  // Distancia en cm
-
-     // Ignorar distancias inválidas o demasiado cortas
-    if (distance < 2.0) {
-        ESP_LOGE("SENSOR", "Distancia inválida: %.2f cm", distance);
-        return -1;  // Devolver un valor inválido
-    }
-
-    return distance;
-
+/**
+ * @brief motor moves in forward direction, with duty cycle = duty %
+ */
+static void brushed_motor_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num , float duty_cycle)
+{
+    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B);
+    mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_A, duty_cycle);
+    mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_A, MCPWM_DUTY_MODE_0); //call this each time, if operator was previously in low/high state
 }
 
-
-
-
-// Tarea: Medición de distancia con sensor ultrasónico
-void TrigEchoSensorTask(void *pvParameters) {
-    gpio_config_t io_config;
-    io_config.intr_type = GPIO_INTR_DISABLE;
-    io_config.mode = GPIO_MODE_OUTPUT;
-    io_config.pin_bit_mask = (1ULL << TRIG_GPIO);
-    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config(&io_config);
-
-    io_config.intr_type = GPIO_INTR_ANYEDGE;
-    io_config.mode = GPIO_MODE_INPUT;
-    io_config.pin_bit_mask = (1ULL << ECHO_GPIO);
-    gpio_config(&io_config);
-
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add(ECHO_GPIO, echo_isr_handler, NULL);
-
-    while (1) {
-        float distance = medir_distancia();
-        if (distance >= 2.0) {
-            ESP_LOGI("SENSOR", "Distancia: %.2f cm", distance);
-
-            if (training_count < MAX_TRAINING_DATA) {
-                training_data[training_count].distance = distance;
-                training_data[training_count].label = (distance < 50.0) ? 1 : 0;
-                training_count++;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
-    }
+/**
+ * @brief motor moves in backward direction, with duty cycle = duty %
+ */
+static void brushed_motor_backward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num , float duty_cycle)
+{
+    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A);
+    mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_B, duty_cycle);
+    mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);  //call this each time, if operator was previously in low/high state
 }
 
-// Tarea: Entrenamiento del perceptrón
-void PerceptronTask(void *pvParameters) {
-    while (1) {
-        if (training_count > 0) {
-            float distances[training_count][1];
-            int labels[training_count];
-
-            for (int i = 0; i < training_count; i++) {
-                distances[i][0] = training_data[i].distance;
-                labels[i] = training_data[i].label;
-            }
-
-            perceptron_train(&perceptron, (float **)distances, labels, training_count, 1);
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
-    }
+/**
+ * @brief motor stop
+ */
+static void brushed_motor_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num)
+{
+    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A);
+    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B);
 }
 
-// Tarea: Control de motores y LEDs
-void MotorControlTask(void *pvParameters) {
-    // Configurar pines de motores y LEDs
-    gpio_reset_pin(MOTOR1_IN1_GPIO);
-    gpio_set_direction(MOTOR1_IN1_GPIO, GPIO_MODE_OUTPUT);
-    gpio_reset_pin(MOTOR1_IN2_GPIO);
-    gpio_set_direction(MOTOR1_IN2_GPIO, GPIO_MODE_OUTPUT);
-    gpio_reset_pin(MOTOR2_IN1_GPIO);
-    gpio_set_direction(MOTOR2_IN1_GPIO, GPIO_MODE_OUTPUT);
-    gpio_reset_pin(MOTOR2_IN2_GPIO);
-    gpio_set_direction(MOTOR2_IN2_GPIO, GPIO_MODE_OUTPUT);
-    gpio_reset_pin(LED_RED_GPIO);
-    gpio_set_direction(LED_RED_GPIO, GPIO_MODE_OUTPUT);
-    gpio_reset_pin(LED_BLUE_GPIO);
-    gpio_set_direction(LED_BLUE_GPIO, GPIO_MODE_OUTPUT);
+/**
+ * @brief Configure MCPWM module for brushed dc motor
+ */
+static void mcpwm_example_brushed_motor_control(void *args){
 
-    while (1) {
-        if (training_count > 0) {
+    //1. mcpwm gpio initialization 
+    mcpwm_example_gpio_initialize();
 
-            //Encender el pwm para el motor de dc 
+    //2. initial mcpwm configuration 
+    printf("Configuring Initial Parameters of mcpwm...\n");
+    mcpwm_config_t pwm_config;
+    pwm_config.frequency = 1000;    //frequency = 500Hz,
+    pwm_config.cmpr_a = 0;    //duty cycle of PWMxA = 0
+    pwm_config.cmpr_b = 0;    //duty cycle of PWMxb = 0
+    pwm_config.counter_mode = MCPWM_UP_COUNTER;
+    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
+    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);    //Configure PWM0A & PWM0B with above settings
+    
+    //3. Call the apis 
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 20.0);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 20.0);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-            float input[1] = {training_data[training_count - 1].distance};
-            int prediction = perceptron_predict(&perceptron, input);
-            ESP_LOGI("PERCEPTRON", "Predicción: %s", prediction == 1 ? "Cerca" : "Lejos");
 
-            if (prediction == 1 && training_data[training_count].distance <= 10) {
-                // Encender motor 1 y LED rojo
-                printf("Enciende motor");
-                gpio_set_level(MOTOR1_IN1_GPIO, 1);
-                gpio_set_level(MOTOR1_IN2_GPIO, 0);
-                gpio_set_level(LED_RED_GPIO, 1);
-                gpio_set_level(LED_BLUE_GPIO, 0);
-            } else if (prediction == 0) {
-                // Encender motor 2 y LED azul
-                gpio_set_level(MOTOR2_IN1_GPIO, 1);
-                gpio_set_level(MOTOR2_IN2_GPIO, 0);
-                gpio_set_level(LED_RED_GPIO, 0);
-                gpio_set_level(LED_BLUE_GPIO, 1);
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));  // Esperar 1 segundo
-    }
-}
-/*
-void SucctionTask(void *pvParameters){
+    gpio_set_direction(PUSH_BUTTON_PIN_SPEED, GPIO_MODE_INPUT);
 
-    gpio_set_level(IN1_GPIO,1);
-    gpio_set_level(IN1_GPIO,0);
-    printf("Girando en sentido horario");
+    while(1){
 
-    for(int duty=0;duty<8191;++duty){
-        ledc_set_duty(LEDC_MODE,LEDC_CHANNEL,duty);
-        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    }
+     buttonState = gpio_get_level(PUSH_BUTTON_PIN_SPEED);
+    if (buttonState == 1 && prestate == 0) {
+        count_value = count_value + 10;
+        float duty_cycle = count_value;
+        brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, duty_cycle);
+        prestate = 1;
+     } 
+  else if(buttonState == 0) {
+    prestate = 0;
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+  }
+  vTaskDelay(500 / portTICK_PERIOD_MS);
 
-     //Detener el motor 
-    gpio_set_level(IN1_GPIO,0);
-    gpio_set_level(IN2_GPIO,0);
-    printf("Motor detenido \n");
-    vTaskDelay(100/ portTICK_PERIOD_MS);
-
-    gpio_set_level(IN1_GPIO,0);
-    gpio_set_level(IN1_GPIO,1);
-    printf("Sentido anti horario \n");
-
-    for(int duty=8191;duty>0;duty-=100){
-        ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty);
-        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
-        vTaskDelay(10 / portTICK_PERIOD_MS); 
-    }
-
-    // Detener el motor
-    gpio_set_level(IN1_GPIO, 0);
-    gpio_set_level(IN2_GPIO, 0);
-    printf("Motor detenido\n");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+   }
 
 }
 
-*/
-
-
-
-void app_main(void) {
-    // Inicializar el perceptrón
-    perceptron_init(&perceptron, 1, 0.1);
-
-    // Crear tareas
-    xTaskCreate(TrigEchoSensorTask, "TrigEchoSensor", 2048, NULL, 1, NULL);
-    xTaskCreate(PerceptronTask, "Perceptron", 2048, NULL, 2, NULL);
-    xTaskCreate(MotorControlTask, "MotorControl", 2048, NULL, 3, NULL);
-    //xTaskCreate(SucctionTask, "SucctionTask", 2048, NULL, 3, NULL);
-
-    // Mantener el programa en ejecución
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+void app_main(void){
+    printf("Testing brushed motor...\n");
+    xTaskCreate(mcpwm_example_brushed_motor_control, "mcpwm_example_brushed_motor_control", 4096, NULL, 5, NULL);
 }
