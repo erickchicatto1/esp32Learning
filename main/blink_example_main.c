@@ -9,10 +9,16 @@
 #include "esp_log.h"
 
 
-//L298N
-#define GPIO_PWM0A_OUT 15   // Set GPIO 15 as PWM0A (IN1 en L298N)
-#define GPIO_PWM0B_OUT 16   // Set GPIO 16 as PWM0B (IN2 en L298N)
-#define ENABLE_PIN 4        // Set GPIO 4 como ENA en L298N
+//L298N One Motor
+#define GPIO_PWM0A_OUT 15       // Set GPIO 15 as PWM0A (IN1 en L298N) 
+#define GPIO_PWM0B_OUT 16       // Set GPIO 16 as PWM0B (IN2 en L298N)
+#define ENABLE_PIN_M1 4        // Set GPIO 4 como ENA en L298N
+
+//L298N Two Motor
+#define GPIO_PWM1A_OUT  17
+#define GPIO_PWM1B_OUT  18
+#define ENABLE_PIN_M2   5
+
 
 
 //-----------------------------Ultrasonic module--------------------------- 
@@ -90,36 +96,72 @@ float medir_distancia(){
 static void mcpwm_example_gpio_initialize(void)
 {
     printf("initializing mcpwm gpio...\n");
+
     mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, GPIO_PWM0A_OUT); // IN1
     mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0B, GPIO_PWM0B_OUT); // IN2
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM1A, GPIO_PWM1A_OUT); // IN3
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM1B, GPIO_PWM1B_OUT); // IN4
 
     // Configurar el pin Enable como salida
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = (1ULL << ENABLE_PIN);
+    io_conf.pin_bit_mask = (1ULL << ENABLE_PIN_M1) | (1ULL << ENABLE_PIN_M2); //In order to have 2 pins
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config(&io_conf);
 
     // Habilitar el puente H (ENA en HIGH)
-    gpio_set_level(ENABLE_PIN, 1);
-    printf("Enable pin set to HIGH\n");
+    gpio_set_level(ENABLE_PIN_M1, 1);
+    gpio_set_level(ENABLE_PIN_M2, 1);
+    printf("Enable pins set to HIGH\n");
 }
 
 // Mover el motor hacia adelante con un ciclo de trabajo específico
-static void brushed_motor_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num, float duty_cycle)
-{
-    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN2 en LOW
-    mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_A, duty_cycle); // IN1 con PWM
-    mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
+static void brushed_motor_forward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num, float duty_cycle,int motor)
+{   
+    if(motor==1){
+       mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN2 en LOW
+       mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_A, duty_cycle); // IN1 con PWM
+       mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
+    }
+    else if(motor == 2){
+        mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN4 en LOW
+        mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_A, duty_cycle); // IN3 con PWM
+        mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_A, MCPWM_DUTY_MODE_0); 
+    }
+  
 }
 
+
+static void brushed_motor_backward(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num, float duty_cycle, int motor){
+
+    if(motor==1){
+       mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A); // IN1 en LOW
+       mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_B, duty_cycle); // IN2 con PWM
+       mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);                
+    }
+    else if(motor==2){
+       mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A); // IN3 en LOW
+       mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_B, duty_cycle); // IN4 con PWM
+       mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
+    }
+
+}
+
+
 // Detener el motor
-static void brushed_motor_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num)
-{
-    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A); // IN1 en LOW
-    mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN2 en LOW
+static void brushed_motor_stop(mcpwm_unit_t mcpwm_num, mcpwm_timer_t timer_num, int motor)
+{   
+    if(motor==1){
+      mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A); // IN1 en LOW
+      mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN2 en LOW
+    }
+    else if(motor==2){
+      mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A); // IN3 en LOW
+      mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B); // IN4 en LOW
+    }
+
 }
 
 void app_main(void)
@@ -139,6 +181,7 @@ void app_main(void)
     pwm_config.counter_mode = MCPWM_UP_COUNTER;
     pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config); // Configurar PWM0A y PWM0B
+    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_1, &pwm_config); // Configurar PWM1A y PWM1B
 
     // 3. Bucle infinito para mantener el motor al 50% de duty cycle
     while (1) {
@@ -148,14 +191,16 @@ void app_main(void)
 
         if(distance < 2.5 && distance < 5.0 ){
             printf("Distance < 5 cm\n");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 50.0);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 50.0,1);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 50.0, 2);
             printf("Motor moving forward at 50%% duty cycle\n");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
         else if(distance < 8.0 && distance <= 12.0){
             printf("Distance <= 12 cm\n");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 75.0);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 75.0, 1);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 75.0, 2);
             printf("Motor moving forward at 75%% duty cycle\n");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
@@ -163,18 +208,20 @@ void app_main(void)
 
         else if(distance < 12.5 && distance <= 14.0){
             printf("Distance <= 14 cm\n ");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 80.0);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 80.0, 1);
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 80.0, 2);
             printf("Motor moving forward at 80%% duty cycle\n");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
         else {
            printf("Distance <= 14 cm\n ");
-           brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100.0); 
+           brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100.0, 1); 
+           brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100.0, 2);
            printf("Motor moving forward at 100%% duty cycle\n");
            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
-        // Esperar un breve momento antes de repetir el bucle
+         // Esperar un breve momento antes de repetir el bucle
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
