@@ -145,20 +145,35 @@ void app_main(void)
 
         float distance = medir_distancia();
         printf("Distance : %.2f cm \n",distance);
-        
-        if(distance < 5.0){
+
+        if(distance < 2.5 && distance < 5.0 ){
             printf("Distance < 5 cm\n");
             brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 50.0);
             printf("Motor moving forward at 50%% duty cycle\n");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
-        else if(distance > 10.0){
-            printf("Distance > 10 cm\n");
+        else if(distance < 8.0 && distance <= 12.0){
+            printf("Distance <= 12 cm\n");
             brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 75.0);
             printf("Motor moving forward at 75%% duty cycle\n");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
-        
+
+        else if(distance < 12.5 && distance <= 14.0){
+            printf("Distance <= 14 cm\n ");
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 80.0);
+            printf("Motor moving forward at 80%% duty cycle\n");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+
+        else {
+           printf("Distance <= 14 cm\n ");
+           brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100.0); 
+           printf("Motor moving forward at 100%% duty cycle\n");
+           vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
         // Esperar un breve momento antes de repetir el bucle
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
