@@ -8,11 +8,15 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 
+//Perceptron
+#include "owmDrivers/Perceptron.h"
+
+#define MAX_TRAINING_DATA   100
 
 //L298N
-#define GPIO_PWM0A_OUT 15   // Set GPIO 15 as PWM0A (IN1 en L298N)
-#define GPIO_PWM0B_OUT 16   // Set GPIO 16 as PWM0B (IN2 en L298N)
-#define ENABLE_PIN 4        // Set GPIO 4 como ENA en L298N
+#define GPIO_PWM0A_OUT 15       // Set GPIO 15 as PWM0A (IN1 en L298N)
+#define GPIO_PWM0B_OUT 16       // Set GPIO 16 as PWM0B (IN2 en L298N)
+#define ENABLE_PIN     4        // Set GPIO 4 como ENA en L298N
 
 
 //-----------------------------Ultrasonic module--------------------------- 
@@ -22,6 +26,15 @@
 volatile int64_t start_time = 0 ;
 volatile int64_t stop_time = 0;
 volatile bool measurement_done = false;
+
+//Estructura para almacenar datos
+typedef struct {
+    float distance;
+    int label;
+}TrainingData;
+
+TrainingData trainingdata[MAX_TRAINING_DATA];
+int trainingCount = 0 ;
 
 //Interrupt the ECHO 
 static void IRAM_ATTR echo_isr_handler(void *arg){
@@ -146,34 +159,45 @@ void app_main(void)
         float distance = medir_distancia();
         printf("Distance : %.2f cm \n",distance);
 
-        if(distance < 2.5 && distance < 5.0 ){
-            printf("Distance < 5 cm\n");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 50.0);
-            printf("Motor moving forward at 50%% duty cycle\n");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        //Guardar la distancia 
+        if(trainingCount < MAX_TRAINING_DATA ){
 
-        else if(distance < 8.0 && distance <= 12.0){
-            printf("Distance <= 12 cm\n");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 75.0);
-            printf("Motor moving forward at 75%% duty cycle\n");
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+           trainingdata[trainingCount].distance =distance;
 
 
-        else if(distance < 12.5 && distance <= 14.0){
+            if(distance < 2.5 && distance < 5.0 ){
+                printf("Distance < 5 cm\n");
+                brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 50.0);
+                printf("Motor moving forward at 50%% duty cycle\n");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                
+            }
+
+            else if(distance < 8.0 && distance <= 12.0){
+                printf("Distance <= 12 cm\n");
+                brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 75.0);
+                printf("Motor moving forward at 75%% duty cycle\n");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+            }
+
+
+            else if(distance < 12.5 && distance <= 14.0){
+                printf("Distance <= 14 cm\n ");
+                brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 80.0);
+                printf("Motor moving forward at 80%% duty cycle\n");
+                vTaskDelay(1000 / portTICK_PERIOD_MS);
+            }
+
+            else {
             printf("Distance <= 14 cm\n ");
-            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 80.0);
-            printf("Motor moving forward at 80%% duty cycle\n");
+            brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100.0); 
+            printf("Motor moving forward at 100%% duty cycle\n");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+            }
 
-        else {
-           printf("Distance <= 14 cm\n ");
-           brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100.0); 
-           printf("Motor moving forward at 100%% duty cycle\n");
-           vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+    }
+
+
         // Esperar un breve momento antes de repetir el bucle
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
