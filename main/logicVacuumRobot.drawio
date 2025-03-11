@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="7o4auCPbFFtS62YbcI8n" name="Robot Logic">
-        <mxGraphModel dx="1575" dy="809" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
+        <mxGraphModel dx="1662" dy="813" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -29,7 +29,7 @@
                         <mxPoint x="842" y="302" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="8" value="Motor A On&lt;div&gt;Motor B On&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
+                <mxCell id="8" value="Motor A On&lt;div&gt;Motor B On&lt;/div&gt;&lt;div&gt;Led test on&amp;nbsp;&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="752" y="200" width="180" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="15" value="" style="edgeStyle=none;html=1;" parent="1" source="9" target="14" edge="1">
@@ -81,14 +81,14 @@
                 <mxCell id="28" value="How make the communication&lt;div&gt;with the ESP32 cam?&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Serial? and only send the bytes?&lt;/div&gt;" style="shape=note2;boundedLbl=1;whiteSpace=wrap;html=1;size=25;verticalAlign=top;align=center;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
                     <mxGeometry x="1160" y="20" width="200" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="29" value="Subsystem subction" style="shape=mxgraph.uml25.behaviorAction;html=1;rounded=1;absoluteArcSize=1;arcSize=10;align=left;spacingLeft=5;whiteSpace=wrap;" vertex="1" parent="1">
+                <mxCell id="29" value="Subsystem subction" style="shape=mxgraph.uml25.behaviorAction;html=1;rounded=1;absoluteArcSize=1;arcSize=10;align=left;spacingLeft=5;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="742" y="290" width="190" height="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="3znlJP9ip-oeklgMIh_Z" name="ComputerVision">
-        <mxGraphModel dx="1575" dy="809" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
+        <mxGraphModel dx="1662" dy="813" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -123,59 +123,59 @@
         </mxGraphModel>
     </diagram>
     <diagram id="s_ZyQQgRduTj_DISDV9v" name="CommunicationVisionToMain">
-        <mxGraphModel dx="1838" dy="847" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
+        <mxGraphModel dx="1662" dy="813" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-3" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-1" target="YU9gucHIzGTh294Iv2h_-2">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-3" value="" style="edgeStyle=none;html=1;" parent="1" source="YU9gucHIzGTh294Iv2h_-1" target="YU9gucHIzGTh294Iv2h_-2" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-1" value="" style="ellipse;fillColor=strokeColor;html=1;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-1" value="" style="ellipse;fillColor=strokeColor;html=1;" parent="1" vertex="1">
                     <mxGeometry x="820" y="60" width="30" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-5" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-2" target="YU9gucHIzGTh294Iv2h_-4">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-5" value="" style="edgeStyle=none;html=1;" parent="1" source="YU9gucHIzGTh294Iv2h_-2" target="YU9gucHIzGTh294Iv2h_-4" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-2" value="Computer Vision" style="shape=mxgraph.uml25.behaviorAction;html=1;rounded=1;absoluteArcSize=1;arcSize=10;align=left;spacingLeft=5;whiteSpace=wrap;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-2" value="Computer Vision" style="shape=mxgraph.uml25.behaviorAction;html=1;rounded=1;absoluteArcSize=1;arcSize=10;align=left;spacingLeft=5;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="740" y="170" width="190" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-7" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-4" target="YU9gucHIzGTh294Iv2h_-6">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-7" value="" style="edgeStyle=none;html=1;" parent="1" source="YU9gucHIzGTh294Iv2h_-4" target="YU9gucHIzGTh294Iv2h_-6" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-4" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-4" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="767" y="281" width="140" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-10" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-6" target="YU9gucHIzGTh294Iv2h_-9">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-10" value="" style="edgeStyle=none;html=1;" parent="1" source="YU9gucHIzGTh294Iv2h_-6" target="YU9gucHIzGTh294Iv2h_-9" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-14" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-6" target="YU9gucHIzGTh294Iv2h_-12">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-14" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="YU9gucHIzGTh294Iv2h_-6" target="YU9gucHIzGTh294Iv2h_-12" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-6" value="" style="rhombus;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-6" value="" style="rhombus;" parent="1" vertex="1">
                     <mxGeometry x="810" y="360" width="58" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-8" value="[if detect a wall ?]" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-8" value="[if detect a wall ?]" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="840" y="340" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-15" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="YU9gucHIzGTh294Iv2h_-9" target="YU9gucHIzGTh294Iv2h_-13">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-15" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="YU9gucHIzGTh294Iv2h_-9" target="YU9gucHIzGTh294Iv2h_-13" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-9" value="" style="rhombus;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-9" value="" style="rhombus;" parent="1" vertex="1">
                     <mxGeometry x="810" y="522" width="58" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-11" value="[if detect a border ?]" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-11" value="[if detect a border ?]" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="835" y="492" width="130" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-12" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-12" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="910" y="410" width="140" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-13" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-13" value="Send to the serial&amp;nbsp;&lt;div&gt;bytes&lt;/div&gt;" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" parent="1" vertex="1">
                     <mxGeometry x="910" y="580" width="140" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-16" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-16" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="970" y="348" width="40" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="YU9gucHIzGTh294Iv2h_-17" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="YU9gucHIzGTh294Iv2h_-17" value="Yes" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="990" y="510" width="40" height="30" as="geometry"/>
                 </mxCell>
             </root>
