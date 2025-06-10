@@ -1,5 +1,7 @@
 idf_component_register(SRCS 
-        "blink_example_main.c"
+        "main.c"
+        "blynk_integration.c"
+        "wifi_manager.c"
         INCLUDE_DIRS 
         "."
         )

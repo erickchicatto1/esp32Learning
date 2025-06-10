@@ -1,5 +1,5 @@
 1. cd C:\Users\robo1\Esp32Course
 2. idf.py build
-3. idf.py -p COM23 flash monitor
+3. idf.py -p COM4 flash monitor
 debugging 
 4.openocd -f board/esp32-wrover-kit-3.3v-cfg
